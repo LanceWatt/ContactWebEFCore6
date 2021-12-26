@@ -5,7 +5,9 @@ VisualStudioVersion = 17.0.32014.148
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CreateProjectTest", "CreateProjectTest\CreateProjectTest.csproj", "{31B669E3-1404-4679-8E71-0F550D71E01D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContactWebModels", "ContactWebModels\ContactWebModels.csproj", "{1D958302-3BC4-4235-9531-CBF02A09093A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ContactWebModels", "ContactWebModels\ContactWebModels.csproj", "{1D958302-3BC4-4235-9531-CBF02A09093A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MyContactManagementData", "MyContactManagementData\MyContactManagementData.csproj", "{6FBAF19E-866F-4B5C-A2D8-FB532D366A29}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{1D958302-3BC4-4235-9531-CBF02A09093A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1D958302-3BC4-4235-9531-CBF02A09093A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{1D958302-3BC4-4235-9531-CBF02A09093A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6FBAF19E-866F-4B5C-A2D8-FB532D366A29}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6FBAF19E-866F-4B5C-A2D8-FB532D366A29}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6FBAF19E-866F-4B5C-A2D8-FB532D366A29}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6FBAF19E-866F-4B5C-A2D8-FB532D366A29}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
