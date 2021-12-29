@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContactWebModels;
 using MyContactManagementData;
+using CreateProjectTest.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace CreateProjectTest.Controllers
 {
@@ -17,12 +19,33 @@ namespace CreateProjectTest.Controllers
         
         private static List<State> _allStates;
         private static SelectList _statesData;
+        private IMemoryCache _cache;
 
-        public ContactsController(MyContactManagerDbContext context)
+        public ContactsController(MyContactManagerDbContext context, IMemoryCache cache)
         {
             _context = context;
-            _allStates = Task.Run(() => _context.States.ToListAsync()).Result;
-            _statesData = new SelectList(_allStates, "Id", "Abbreviation");
+            _cache = cache;
+            SetAllStatesChachingData();
+            _statesData = new SelectList(_allStates, "Id", "Abbreviation");    
+        }
+
+        private void SetAllStatesChachingData()
+        {
+
+            var allStates = new List<State>();
+
+            // if we get the value back all states is going to contain the states at this point
+            if (!_cache.TryGetValue(ContactCacheConstants.ALL_STATES, out allStates))
+            {
+                var allStatesData = Task.Run(() => _context.States.ToListAsync()).Result; // Store all states in allStatesData
+
+                _cache.Set(ContactCacheConstants.ALL_STATES, allStatesData, TimeSpan.FromDays(1)); // Add allStatesData to Cache
+
+                allStates = _cache.Get(ContactCacheConstants.ALL_STATES) as List<State>;
+            }
+
+            _allStates = allStates;
+
         }
 
         private async Task UpdateStateAndResetModelState(Contact contact)
@@ -76,11 +99,16 @@ namespace CreateProjectTest.Controllers
         public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,Email,PhonePrimary,PhoneSecondary,StreetAddress1,StreetAddress2,City,StateId,Zip,UserId")] Contact contact)
         {
 
+
+
             UpdateStateAndResetModelState(contact);
 
+            // Issue, can't call to the context as it's already opened on previous call
             if (ModelState.IsValid)
             {
-                _context.Contacts.AddAsync(contact);
+                var state = await _context.States.SingleOrDefaultAsync(x => x.Id == contact.StateId);
+                contact.State = state;
+                await _context.Contacts.AddAsync(contact);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }

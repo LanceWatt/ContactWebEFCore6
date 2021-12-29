@@ -1,29 +1,42 @@
 ﻿#nullable disable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using ContactWebModels;
 using MyContactManagementData;
+using Microsoft.Extensions.Caching.Memory;
+using CreateProjectTest.Models;
+using MyContactManagerServices;
 
 namespace CreateProjectTest.Controllers
 {
     public class StatesController : Controller
     {
-        private readonly MyContactManagerDbContext _context;
+        //private readonly MyContactManagerDbContext _context;
+        private readonly IStatesService _statesService;
+        private IMemoryCache _cache;
 
-        public StatesController(MyContactManagerDbContext context)
-        {
-            _context = context;
+        public StatesController(IStatesService statesService, IMemoryCache cache)
+        {;
+            _statesService = statesService;
+            _cache = cache;
         }
 
         // GET: States
         public async Task<IActionResult> Index()
         {
-            return View(await _context.States.ToListAsync());
+            var allStates = new List<State>();
+
+            // if we get the value back all states is going to contain the states at this point
+            if (!_cache.TryGetValue(ContactCacheConstants.ALL_STATES, out allStates))
+            {
+                var allStatesData = await _statesService.GetAllAsync() as List<State>;
+
+                _cache.Set(ContactCacheConstants.ALL_STATES, allStatesData, TimeSpan.FromDays(1));
+
+                return View(allStatesData);
+            }
+
+            return View(allStates);
         }
 
         // GET: States/Details/5
@@ -34,8 +47,8 @@ namespace CreateProjectTest.Controllers
                 return NotFound();
             }
 
-            var state = await _context.States
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var state = await _statesService.GetAsync((int)id);
+
             if (state == null)
             {
                 return NotFound();
@@ -57,8 +70,8 @@ namespace CreateProjectTest.Controllers
         {
             if (ModelState.IsValid)
             {
-                _context.Add(state);
-                await _context.SaveChangesAsync();
+                await _statesService.AddOrUpdateAsync(state);
+                _cache.Remove(ContactCacheConstants.ALL_STATES); // INVALIDATE CACHE
                 return RedirectToAction(nameof(Index));
             }
             return View(state);
@@ -72,7 +85,7 @@ namespace CreateProjectTest.Controllers
                 return NotFound();
             }
 
-            var state = await _context.States.FindAsync(id);
+            var state = await _statesService.GetAsync((int)id);
             if (state == null)
             {
                 return NotFound();
@@ -94,8 +107,9 @@ namespace CreateProjectTest.Controllers
             {
                 try
                 {
-                    _context.Update(state);
-                    await _context.SaveChangesAsync();
+                    await _statesService.AddOrUpdateAsync(state);
+
+                    _cache.Remove(ContactCacheConstants.ALL_STATES); // INVALIDATE CACHE
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -121,8 +135,8 @@ namespace CreateProjectTest.Controllers
                 return NotFound();
             }
 
-            var state = await _context.States
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var state = await _statesService.GetAsync((int)id);
+
             if (state == null)
             {
                 return NotFound();
@@ -136,15 +150,14 @@ namespace CreateProjectTest.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var state = await _context.States.FindAsync(id);
-            _context.States.Remove(state);
-            await _context.SaveChangesAsync();
+            await _statesService.DeleteAsync((int)id);
+            _cache.Remove(ContactCacheConstants.ALL_STATES); // INVALIDATE CACHE
             return RedirectToAction(nameof(Index));
         }
 
         private bool StateExists(int id)
         {
-            return _context.States.Any(e => e.Id == id);
+            return Task.Run(() => _statesService.ExistsAsync(id)).Result;
         }
     }
 }
